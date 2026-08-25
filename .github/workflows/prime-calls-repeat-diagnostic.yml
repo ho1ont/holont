@@ -1,0 +1,47 @@
+name: PRIME Calls Repeat Diagnostic
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'qa-runner/tests/calls-repeat.spec.mjs'
+      - 'qa-runner/playwright.calls-repeat.config.mjs'
+      - '.github/workflows/prime-calls-repeat-diagnostic.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prime-calls-repeat-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repeat:
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [iphone-15-pro, compact-iphone]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    env:
+      PRIME_URL: https://prime-online-v01.vercel.app/
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+        working-directory: qa-runner
+      - run: npx playwright install ffmpeg
+        working-directory: qa-runner
+      - name: Repeat-call diagnostic
+        run: npx playwright test --config=playwright.calls-repeat.config.mjs --project='${{ matrix.project }}'
+        working-directory: qa-runner
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prime-calls-repeat-${{ matrix.project }}-${{ github.run_id }}
+          path: qa-runner/test-results
+          if-no-files-found: warn
+          retention-days: 3
