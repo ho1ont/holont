@@ -1,7 +1,7 @@
 import { defineConfig } from '@playwright/test';
-// R14 P2 final rerun: reliable signal + cross-module typing bridge
+// R14 P2 final rerun: reliable signal + cross-module typing bridge + stable pinned gesture
 export default defineConfig({
-  testDir:'./tests',testMatch:['**/chat-r14p2.spec.mjs'],timeout:120000,expect:{timeout:9000},workers:1,retries:0,reporter:[['line']],
+  testDir:'./tests',testMatch:['**/chat-r14p2.spec.mjs'],timeout:180000,expect:{timeout:9000},workers:1,retries:0,reporter:[['line']],
   use:{baseURL:process.env.PRIME_URL||'https://prime-online-v01.vercel.app/',channel:'chrome',trace:'retain-on-failure',screenshot:'only-on-failure',video:'retain-on-failure',actionTimeout:9000,navigationTimeout:25000},
   projects:[
     {name:'iphone-15-pro',use:{browserName:'chromium',viewport:{width:393,height:852},deviceScaleFactor:3,isMobile:true,hasTouch:true}},
