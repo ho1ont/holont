@@ -1,0 +1,6 @@
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
+  testDir:'./tests',testMatch:['**/chat-edit.spec.mjs'],timeout:120000,expect:{timeout:8000},workers:1,retries:0,reporter:[['line']],
+  use:{baseURL:process.env.PRIME_URL||'https://prime-online-v01.vercel.app/',channel:'chrome',trace:'retain-on-failure',screenshot:'only-on-failure',video:'retain-on-failure',actionTimeout:8000,navigationTimeout:20000},
+  projects:[{name:'compact-iphone',use:{browserName:'chromium',viewport:{width:375,height:667},deviceScaleFactor:2,isMobile:true,hasTouch:true}}]
+});
