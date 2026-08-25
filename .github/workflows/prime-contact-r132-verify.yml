@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 7
     env:
       PRIME_URL: https://prime-online-v01.vercel.app/
-      QA_VERIFY_REV: r132-v2
+      QA_VERIFY_REV: r132-v3
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
