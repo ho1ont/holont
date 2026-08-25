@@ -1,5 +1,5 @@
 import { defineConfig } from '@playwright/test';
-// R14 P2 rerun: unread positioning + draft open guard
+// R14 P2 rerun: unread positioning + lifecycle-safe draft restore
 export default defineConfig({
   testDir:'./tests',testMatch:['**/chat-r14p2.spec.mjs'],timeout:120000,expect:{timeout:9000},workers:1,retries:0,reporter:[['line']],
   use:{baseURL:process.env.PRIME_URL||'https://prime-online-v01.vercel.app/',channel:'chrome',trace:'retain-on-failure',screenshot:'only-on-failure',video:'retain-on-failure',actionTimeout:9000,navigationTimeout:25000},
