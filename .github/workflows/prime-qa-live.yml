@@ -4,7 +4,8 @@ on:
   push:
     branches: [main]
     paths:
-      - 'qa-runner/**'
+      - 'qa-runner/tests/autopilot.spec.mjs'
+      - 'qa-runner/playwright.config.mjs'
       - '.github/workflows/prime-qa-live.yml'
   workflow_dispatch:
 
@@ -40,7 +41,7 @@ jobs:
         run: npx playwright install ffmpeg
 
       - name: Run PRIME QA Autopilot 2.0
-        run: npm test
+        run: npx playwright test tests/autopilot.spec.mjs
 
       - name: Upload evidence
         if: always()
