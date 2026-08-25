@@ -1,0 +1,50 @@
+name: PRIME Main R13.2 Recheck
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/prime-main-recheck.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  main:
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [iphone-15-pro, compact-iphone]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: qa-runner
+    env:
+      PRIME_URL: https://prime-online-v01.vercel.app/
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install ffmpeg
+      - name: Make onboarding dismiss bounded
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('tests/main.spec.mjs')
+          s=p.read_text().replace('for(let pass=0;pass<18;pass++)','for(let pass=0;pass<5;pass++)')
+          s=s.replace("for(let i=0;i<20;i++){await dismiss(page);const id=", "for(let i=0;i<20;i++){const id=")
+          p.write_text(s)
+          PY
+      - name: Main R13.2 browser recheck
+        run: npx playwright test tests/main.spec.mjs --project='${{ matrix.project }}'
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prime-main-${{ matrix.project }}-${{ github.run_id }}
+          path: qa-runner/artifacts
+          if-no-files-found: warn
+          retention-days: 3
