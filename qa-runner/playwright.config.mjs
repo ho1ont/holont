@@ -10,6 +10,7 @@ export default defineConfig({
   reporter: [['line'], ['html', { outputFolder: 'artifacts/html', open: 'never' }]],
   use: {
     baseURL: process.env.PRIME_URL || 'https://prime-online-v01.vercel.app/',
+    channel: 'chrome',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
