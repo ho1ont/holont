@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests',
-  testMatch: ['**/main.spec.mjs', '**/contact2.spec.mjs', '**/contact3.spec.mjs'],
+  testMatch: ['**/main.spec.mjs', '**/contact2.spec.mjs', '**/contact3.spec.mjs', '**/calls.spec.mjs'],
   timeout: 120_000,
   expect: { timeout: 7_000 },
   fullyParallel: false,
@@ -12,6 +12,7 @@ export default defineConfig({
   use: {
     baseURL: process.env.PRIME_URL || 'https://prime-online-v01.vercel.app/',
     channel: 'chrome',
+    launchOptions: { args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', '--autoplay-policy=no-user-gesture-required'] },
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
