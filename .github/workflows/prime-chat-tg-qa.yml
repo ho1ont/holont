@@ -1,0 +1,50 @@
+name: PRIME Chat Telegram-Class QA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'qa-runner/tests/chat-tg.spec.mjs'
+      - 'qa-runner/playwright.chat-tg.config.mjs'
+      - '.github/workflows/prime-chat-tg-qa.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prime-chat-tg-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  chat-tg:
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [iphone-15-pro, compact-iphone]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      PRIME_URL: https://prime-online-v01.vercel.app/
+      QA_CHAT_REV: telegram-class-r133
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+        working-directory: qa-runner
+      - run: npx playwright install ffmpeg
+        working-directory: qa-runner
+      - name: Run Telegram-class chat QA
+        run: npx playwright test --config=playwright.chat-tg.config.mjs --project='${{ matrix.project }}'
+        working-directory: qa-runner
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prime-chat-tg-${{ matrix.project }}-${{ github.run_id }}
+          path: |
+            qa-runner/artifacts
+            qa-runner/test-results
+          if-no-files-found: warn
+          retention-days: 3
