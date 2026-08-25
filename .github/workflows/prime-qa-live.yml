@@ -1,0 +1,52 @@
+name: PRIME QA Autopilot 2.0 Live
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'qa-runner/**'
+      - '.github/workflows/prime-qa-live.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prime-qa-autopilot-live
+  cancel-in-progress: true
+
+jobs:
+  live-browser-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: qa-runner
+    env:
+      PRIME_URL: https://prime-online-v01.vercel.app/
+    steps:
+      - name: Checkout runner
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright
+        run: npm install --no-audit --no-fund
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run PRIME QA Autopilot 2.0
+        run: npm test
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prime-qa-live-${{ github.run_id }}
+          path: qa-runner/artifacts
+          if-no-files-found: warn
+          retention-days: 3
