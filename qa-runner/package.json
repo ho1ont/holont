@@ -1,0 +1,11 @@
+{
+  "name": "prime-qa-public-runner",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "latest"
+  }
+}
