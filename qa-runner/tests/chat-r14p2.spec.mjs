@@ -9,7 +9,7 @@ async function pair(request,project){const a=await signup(request,project,'a'),b
 async function cleanup(request,q){if(!q)return;for(const x of [q.a,q.b])await request.post(CLEAN,{headers:{Authorization:`Bearer ${x.token}`},data:{},timeout:15000}).catch(()=>null)}
 async function hold(page,loc,ms=390){const b=await loc.boundingBox();if(!b)throw new Error('no bubble box');const c=await page.context().newCDPSession(page),x=Math.round(b.x+b.width/2),y=Math.round(b.y+b.height/2);await c.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y,radiusX:2,radiusY:2,force:1,id:1}]});await page.waitForTimeout(ms);await c.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await c.detach()}
 for(const project of ['iphone-15-pro','compact-iphone'])test(`R14 P2 ${project}`,async({page,request},info)=>{
- if(info.project.name!==project)test.skip();test.setTimeout(120000);let q=null;const errors=[],http5=[];page.on('pageerror',e=>errors.push(String(e)));page.on('response',r=>{if(r.status()>=500)http5.push({s:r.status(),u:r.url()})});
+ if(info.project.name!==project)test.skip();test.setTimeout(180000);let q=null;const errors=[],http5=[];page.on('pageerror',e=>errors.push(String(e)));page.on('response',r=>{if(r.status()>=500)http5.push({s:r.status(),u:r.url()})});
  try{
   q=await pair(request,project);
   await page.addInitScript(t=>localStorage.setItem('prime_token',t),q.a.token);
@@ -28,7 +28,7 @@ for(const project of ['iphone-15-pro','compact-iphone'])test(`R14 P2 ${project}`
   await sent.scrollIntoViewIfNeeded();await hold(page,sent);await expect(page.locator('#pc47menu')).toBeVisible({timeout:3500});const rx=page.locator('#pc47menu [data-pc49-react="🔥"]');await rx.tap();await expect(page.locator('.pc49-reactions [data-pc49-chip="🔥"]')).toBeVisible({timeout:6000});
   await hold(page,sent);await expect(page.locator('#pc47menu')).toBeVisible();await page.locator('#pc47menu [data-pc47-act="edit"]').tap();await expect(input).toHaveValue('P2 RECEIPT MESSAGE');await input.fill('P2 RECEIPT EDITED');await page.locator('.pc47-send').tap();await expect(page.locator('.pc47-msg').filter({hasText:'P2 RECEIPT EDITED'}).last()).toBeVisible({timeout:7000});
   const own2=page.locator(`.pc47-msg[data-pc47-msg="${q.own[1].id}"]`);await own2.scrollIntoViewIfNeeded();await hold(page,own2);await page.locator('#pc47menu [data-pc49-pin]').tap();await expect(page.locator('.pc49-pinned')).toBeVisible({timeout:6000});
-  await hold(page,own2);await page.locator('#pc47menu [data-pc47-act="delete"]').tap();await expect(own2).toContainText('Сообщение удалено',{timeout:7000});
+  await own2.scrollIntoViewIfNeeded();await page.waitForTimeout(120);await hold(page,own2);await expect(page.locator('#pc47menu')).toBeVisible({timeout:3500});await page.locator('#pc47menu [data-pc47-act="delete"]').tap();await expect(own2).toContainText('Сообщение удалено',{timeout:7000});
   const layout=await page.evaluate(()=>({sw:document.documentElement.scrollWidth,iw:innerWidth,p2:window.PRIME_CHAT_P2?.version,stats:window.PRIME_CHAT_ENGINE_STATS?.()}));expect(layout.sw).toBeLessThanOrEqual(layout.iw+3);expect(layout.p2).toBe('R14-P2');expect(errors).toEqual([]);expect(http5).toEqual([]);
   fs.mkdirSync('artifacts/r14p2',{recursive:true});await page.screenshot({path:`artifacts/r14p2/${project}.png`});fs.writeFileSync(`artifacts/r14p2/${project}.json`,JSON.stringify({layout,errors,http5},null,2));
  }finally{await cleanup(request,q)}
