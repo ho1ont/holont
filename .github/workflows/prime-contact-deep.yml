@@ -1,0 +1,41 @@
+name: PRIME Contact Deep QA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/prime-contact-deep.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contact:
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [iphone-15-pro, compact-iphone]
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    defaults:
+      run:
+        working-directory: qa-runner
+    env:
+      PRIME_URL: https://prime-online-v01.vercel.app/
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install ffmpeg
+      - name: Deep Contact QA
+        run: npx playwright test tests/contact2.spec.mjs --project='${{ matrix.project }}'
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prime-contact-${{ matrix.project }}-${{ github.run_id }}
+          path: qa-runner/artifacts
+          if-no-files-found: warn
+          retention-days: 3
