@@ -18,7 +18,7 @@ concurrency:
 jobs:
   live-browser-qa:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 8
     defaults:
       run:
         working-directory: qa-runner
@@ -33,11 +33,8 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install Playwright
+      - name: Install QA package
         run: npm install --no-audit --no-fund
-
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
 
       - name: Run PRIME QA Autopilot 2.0
         run: npm test
