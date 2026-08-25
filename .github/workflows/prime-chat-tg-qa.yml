@@ -26,12 +26,17 @@ jobs:
     timeout-minutes: 5
     env:
       PRIME_URL: https://prime-online-v01.vercel.app/
-      QA_CHAT_REV: telegram-class-r133
+      QA_CHAT_REV: telegram-class-r134-live
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Verify active PRIME UI loader
+        run: |
+          curl -fsS 'https://lqnnqsopdqnibbyzoakc.supabase.co/functions/v1/prime-battles-ui?lint=1' | tee /tmp/prime-ui-lint.json
+          grep -q '"ok":true' /tmp/prime-ui-lint.json
+          grep -q '"release":"R13.4"' /tmp/prime-ui-lint.json
       - run: npm install --no-audit --no-fund
         working-directory: qa-runner
       - run: npx playwright install ffmpeg
