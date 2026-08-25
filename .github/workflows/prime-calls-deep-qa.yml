@@ -25,6 +25,7 @@ jobs:
     timeout-minutes: 8
     env:
       PRIME_URL: https://prime-online-v01.vercel.app/
+      QA_CALLS_REV: call-start-v8-stale-reset-v1
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
