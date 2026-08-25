@@ -1,0 +1,57 @@
+name: PRIME Chat Engine 14 Critical QA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'qa-runner/tests/chat-r14.spec.mjs'
+      - 'qa-runner/playwright.chat-r14.config.mjs'
+      - '.github/workflows/prime-chat-r14-critical.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prime-chat-r14-critical-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  critical:
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [iphone-15-pro, compact-iphone]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      PRIME_URL: https://prime-online-v01.vercel.app/
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify live R14 loader
+        run: |
+          set -e
+          x=$(curl -fsS 'https://lqnnqsopdqnibbyzoakc.supabase.co/functions/v1/prime-battles-ui?lint=1')
+          echo "$x"
+          echo "$x" | grep '"ok":true'
+          echo "$x" | grep '"release":"R14-P1"'
+          echo "$x" | grep '"r14":true'
+      - run: npm install --no-audit --no-fund
+        working-directory: qa-runner
+      - run: npx playwright install ffmpeg
+        working-directory: qa-runner
+      - name: Run R14 critical QA
+        run: npx playwright test --config=playwright.chat-r14.config.mjs --project='${{ matrix.project }}'
+        working-directory: qa-runner
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prime-chat-r14-${{ matrix.project }}-${{ github.run_id }}
+          path: |
+            qa-runner/artifacts/r14
+            qa-runner/test-results
+          if-no-files-found: warn
+          retention-days: 3
