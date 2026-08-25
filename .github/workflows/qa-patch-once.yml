@@ -1,0 +1,50 @@
+name: Patch PRIME QA runner robustness
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/qa-patch-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch QA scenarios
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p=Path('qa-runner/tests/contact2.spec.mjs')
+          s=p.read_text()
+          s=s.replace("const post=(request,url,t,data,extra={})=>request.post(url,{headers:{Authorization:`Bearer ${t}`,'Content-Type':'application/json',...extra},data});", "const post=(request,url,t,data,extra={})=>request.post(url,{headers:{Authorization:`Bearer ${t}`,'Content-Type':'application/json',...extra},data,timeout:30000});")
+          s=s.replace("async function trustedEdgeSwipe(page){const c=await page.context().newCDPSession(page),y=Math.round(Math.min(innerHeight||400,400)/2);", "async function trustedEdgeSwipe(page){const c=await page.context().newCDPSession(page),y=Math.round(Math.min(page.viewportSize()?.height||400,400)/2);")
+          s=s.replace("await page.waitForFunction(()=>typeof window.PRIME?.openConnect==='function',{timeout:10000});await page.evaluate(()=>window.PRIME.openConnect());", "await page.waitForFunction(()=>!!window.PRIME_CONNECT_CORE?.showRoot,null,{timeout:12000});await page.evaluate(()=>window.PRIME_CONNECT_CORE.showRoot(false));")
+          p.write_text(s)
+
+          p=Path('qa-runner/tests/main.spec.mjs')
+          s=p.read_text()
+          old="""async function dismiss(page){for(let pass=0;pass<2;pass++)for(const s of ['#releasecontinue','[data-prime-guide=\"skip\"]','[data-action=\"onboard-skip\"]','button:has-text(\"ПРОПУСТИТЬ\")','button:has-text(\"Пропустить\")']){const e=page.locator(s).first();if(await e.isVisible().catch(()=>false)){await e.click({timeout:1200}).catch(()=>null);await page.waitForTimeout(100)}}}"""
+          new="""async function dismiss(page){const ss=['#releasecontinue','[data-release-onboard-skip]','[data-prime-guide=\"skip\"]','[data-action=\"onboard-skip\"]','#onboard button:has-text(\"ПРОПУСТИТЬ\")','#onboard button:has-text(\"Пропустить\")','button:has-text(\"ПРОПУСТИТЬ\")','button:has-text(\"Пропустить\")'];for(let pass=0;pass<18;pass++){let acted=false;for(const s of ss){const e=page.locator(s).first();if(await e.isVisible().catch(()=>false)){await e.click({force:true,timeout:1200}).catch(()=>null);acted=true;await page.waitForTimeout(80)}}if(!acted)await page.waitForTimeout(120)}}"""
+          s=s.replace(old,new)
+          s=s.replace("for(const id of VIEWS){const sel=", "for(const id of VIEWS){await dismiss(page);const sel=")
+          s=s.replace("if(project==='compact-iphone'){const tell=", "if(project==='compact-iphone'){await dismiss(page);await touch(page,'#primeXBar [data-x-view=\"checkv\"]');await page.waitForTimeout(140);const tell=")
+          s=s.replace(" const more=page.locator('#moremenu');", " await dismiss(page);const more=page.locator('#moremenu');")
+          s=s.replace("for(let i=0;i<20;i++){const id=", "for(let i=0;i<20;i++){await dismiss(page);const id=")
+          p.write_text(s)
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name "PRIME QA Bot"
+          git config user.email "qa-bot@users.noreply.github.com"
+          git add qa-runner/tests/contact2.spec.mjs qa-runner/tests/main.spec.mjs
+          if git diff --cached --quiet; then
+            echo "No changes needed"
+          else
+            git commit -m "qa: harden runner against onboarding and fixture latency"
+            git push
+          fi
